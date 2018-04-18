@@ -15,37 +15,55 @@ def print_matrix(m):
         print("")
 
 #numbers in years, multiply by 4 since timestep = 3 months
-egg_stage = 3 #time egg to smolt
-ocean1 = 3 #time smolt to mature in ocean
+egg_stage = 1 #time egg to smolt
+ocean1 = 0.5 #time smolt to mature in ocean
 ocean2 = 0.25 #time mature smolt to get up river
-spawn = 0 #irrelevant, spawning fish just die
-stock = 1
+spawn = 1 #irrelevant, spawning fish just die. for dimension
+stock = 1 #same as above
 
 #overall survival rates
 egg_to_ocean1 = .01
 ocean1_to_ocean2 = 0.1
 ocean2_to_spawn = .1
 
-dim = int(egg_stage * 4 + ocean1 * 4 + ocean2 * 4 + 1 + stock * 4)
-#dim = 12 + 12 + 1 + 1 + 4
+dim = int(egg_stage * 4 + ocean1 * 4 + ocean2 * 4 + spawn + stock)
 matrix = np.zeros((dim, dim))
-#print(matrix)
 
-egg_per_stage_survival = round(egg_to_ocean1 ** (1/float(12)), 2)
-for i in range(12):
-    matrix[i+1, i] = egg_per_stage_survival
+#xth root of egg_to_ocean1, to account for being applied multiple times
+egg_per_stage_survival = round(egg_to_ocean1 ** (1/float(4)), 2)
+curr_index = 0
+for i in range(egg_stage * 4):
+    matrix[curr_index+1, curr_index] = egg_per_stage_survival
+    curr_index += 1
 
-ocean1_per_stage_survival = round(ocean1_to_ocean2 ** (1/float(12)), 2)
-for i in range(12):
-    matrix[12 + i + 1, 12 + i] = ocean1_per_stage_survival
+#xth root of ocean1_to_ocean2, to account for being applied multiple times
+ocean1_per_stage_survival = round(ocean1_to_ocean2 ** (1/float(2)), 2)
+
+for i in range(int(ocean1 * 4)):
+    matrix[curr_index + 1, curr_index] = ocean1_per_stage_survival
+    curr_index += 1
 
 
-matrix[25, 24] = 1
-matrix[26,25] = 1
-matrix[27,26] = 1
-matrix[28,27] = ocean2_to_spawn
+matrix[curr_index + 1, curr_index] = ocean2_to_spawn
 
-matrix[0,12+12+4] = 8000 #fecundity
+matrix[0,egg_stage*4 +int(ocean1*4) +1 ] = 8000 #fecundity
+
+matrix[0, egg_stage*4 + int(ocean1*4) + 1 + 1] = 5000 #"stock"
 
 
 print_matrix(matrix)
+
+vector_i = np.array([1000,0,0,0,   1000,0,    0, 0, 0])
+
+print("t = 0")
+print(vector_i)
+
+print("--------------------------------------------")
+
+for i in range(1,300):
+    print("t = " + str(i))
+    vector_i = matrix.dot(vector_i)
+    if (i+1) % 4 == 0:
+        vector_i[len(vector_i) - 1] = 1
+    print(vector_i)
+    print("\n--------------------------------------------\n")
